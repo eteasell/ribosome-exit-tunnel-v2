@@ -11,7 +11,6 @@ def get_proteins(type):
             data = response.json()
 
             proteins = [{'parent_id': obj['parent_rcsb_id'], 'seq': obj['entity_poly_seq_one_letter_code']} for obj in data['polymers']]
-            print(len(proteins))
             return proteins
         else:
             print('Error:', response.status_code)
@@ -29,3 +28,15 @@ def save_fasta(sequences, type):
         for seq in sequences:
             file.write(f">{type}_{seq['parent_id']}\n{seq['seq']}\n")
             
+
+# Map conserved residue locations to orignal sequence positions
+def map_to_orignal(sequence, position):
+    ungapped_position = 0
+    
+    for i, residue in enumerate(sequence):
+        if residue != "-":
+            if i == position:
+                return ungapped_position
+            ungapped_position += 1
+            
+    return None
