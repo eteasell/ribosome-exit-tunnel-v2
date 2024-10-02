@@ -10,13 +10,17 @@ def get_proteins(type):
         if response.status_code == 200:
             data = response.json()
 
-            proteins = [{'parent_id': obj['parent_rcsb_id'], 'seq': obj['entity_poly_seq_one_letter_code']} for obj in data['polymers']]
+            proteins = [{'parent_id': obj['parent_rcsb_id'], 'chain_id': obj['auth_asym_id'], 'seq': obj['entity_poly_seq_one_letter_code']} 
+                        for obj in data['polymers']]
             return proteins
         else:
             print('Error:', response.status_code)
             return None
     except:
         return None
+    
+def get_mmcif(parent_id):
+    return
     
 def save_fasta(sequences, type):
 
