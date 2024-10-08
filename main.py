@@ -5,8 +5,13 @@ from data_access import *
 import csv
 from get_coorinates import *
 from choose_landmarks import *
+import time
+
+# TODO:
+# - clean API response list. For example: 4TUD shows up twice with two diff chains...
 
 # This script is for uL4 only - for now
+t1 = time.time()
 
 conserved_threshold = 0.8
 distance_threshold = 10
@@ -67,3 +72,6 @@ with open("data/output/landmarks.csv", mode='w', newline='') as file:
         writer.writeheader()
     
     writer.writerows(rows)
+    
+duration = time.time() - t1
+print("Script Time: " + str(duration))

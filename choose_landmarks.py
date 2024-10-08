@@ -18,6 +18,6 @@ def cherry_pick(seq, conserved_positions, threshold):
         print(f"{pos} = {dist}")
         
         if dist <= threshold:
-            mapped_conserved.append((val, pos[1]))
+            mapped_conserved.append(pos)
         
     return mapped_conserved
