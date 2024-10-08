@@ -10,9 +10,14 @@ def get_proteins(type):
         
         if response.status_code == 200:
             data = response.json()
-
-            proteins = [{'parent_id': obj['parent_rcsb_id'], 'auth_asym_id': obj['auth_asym_id'], 'seq': obj['entity_poly_seq_one_letter_code_can']} 
-                        for obj in data['polymers']]
+            
+            proteins = []
+            ids = set()
+            for obj in data['polymers']:
+                if obj['parent_rcsb_id'] not in ids:
+                    ids.add(obj['parent_rcsb_id'])
+                    proteins.append({'parent_id': obj['parent_rcsb_id'], 'auth_asym_id': obj['auth_asym_id'], 'seq': obj['entity_poly_seq_one_letter_code']})
+                
             return proteins
         else:
             print('Error:', response.status_code)
