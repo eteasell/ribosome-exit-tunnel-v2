@@ -3,6 +3,7 @@ import numpy as np
 from Bio.SeqUtils import seq3
 from data_access import *
 from pathlib import Path
+from collections import Counter
 
 # Example parameters:
 # landmark = ('uL4-1', 'G', '56')
@@ -11,14 +12,13 @@ from pathlib import Path
 def get_landmark_coordinates(landmark, chain, parent):
     
     try:
-        parent_chain = f'{parent}_{chain}'
-        file = f'data/mmcif/{parent_chain}.cif'
+        file = f'data/mmcif/{parent}.cif'
         
         if Path(file).is_file() is False:
-            get_mmcif(parent, chain)
+            get_mmcif(parent)
                
-        if parent_chain not in cmd.get_names():
-            cmd.load(f'data/mmcif/{parent_chain}.cif', object=f'{parent_chain}')
+        if parent not in cmd.get_names():
+            cmd.load(f'data/mmcif/{parent}.cif', object=f'{parent}')
         
     except:
         return None
@@ -28,7 +28,7 @@ def get_landmark_coordinates(landmark, chain, parent):
     atom_coords = []
     cmd.iterate_state(1, select, 'atom_coords.append((chain, resn, x, y, z))', space={'atom_coords': atom_coords})
     
-    if (atom_coords[0][1] != seq3(landmark[1]).upper()):
+    if (len(atom_coords) == 0 or atom_coords[0][1] != seq3(landmark[1]).upper()):
         return None
     
     vec = np.zeros(3)
@@ -51,4 +51,14 @@ def map_to_orignal(sequence, position):
                 return ungapped_position
             ungapped_position += 1
             
+    return None
+
+# Given an MSA column, return the most common element if it is at least as frequent as threshold
+def find_conserved(column, threshold):
+    counter = Counter(column)
+    mode = counter.most_common(1)[0]
+    
+    if (mode[0] != '-' and mode[1] / len(column) >= threshold):
+        return mode[0]
+    
     return None
