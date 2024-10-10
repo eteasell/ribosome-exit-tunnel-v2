@@ -1,5 +1,5 @@
-from get_coorinates import *
-from tunnel_coordinates import *
+from ribosome_exit_tunnel.get_coorinates import *
+from ribosome_exit_tunnel.tunnel_coordinates import *
 
 # Given a list of potential landmarks in the form: [(31, 'F'), (43, 'V'), ..]
 def cherry_pick(seq, conserved_positions, threshold):

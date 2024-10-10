@@ -1,6 +1,8 @@
 import requests
 import urllib.request
 import shutil
+import json
+import time
 
 # API call to get list of all proteins of type 'type'
 def get_proteins(type):
@@ -24,6 +26,27 @@ def get_proteins(type):
             return None
     except:
         return None
+    
+def read_polymers_file(type):
+    file_path = f'data/polymers/{type}_records.json'
+    with open(file_path, 'r', encoding='utf-8-sig') as file:
+        data = json.load(file)
+    
+    try:
+        entities = data[0]["collect(properties(m))"]
+        ids = set()
+        proteins = []
+        for obj in entities:
+            if obj['parent_rcsb_id'] not in ids:
+                ids.add(obj['parent_rcsb_id'])
+                proteins.append({'parent_id': obj['parent_rcsb_id'], 'auth_asym_id': obj['auth_asym_id'], 'seq': obj['entity_poly_seq_one_letter_code']})
+             
+        return proteins   
+    except:
+        print("Error accessing polymer data.")
+        return None
+    
+    return
     
 # API call to get mmcif file
 def get_mmcif(parent_id):

@@ -1,19 +1,16 @@
 from Bio.Seq import Seq
 import subprocess
 from Bio import AlignIO
-from data_access import *
+from ribosome_exit_tunnel.data_access import *
 import csv
-from get_coorinates import *
-from choose_landmarks import *
+from ribosome_exit_tunnel.get_coorinates import *
+from ribosome_exit_tunnel.choose_landmarks import *
 import time
-
-# TODO:
-# - clean API response list. For example: 4TUD shows up twice with two diff chains...
 
 # This script is for uL4 only - for now
 t1 = time.time()
 
-conserved_threshold = 0.8
+conserved_threshold = 0.9
 distance_threshold = 10
 
 # Itialize with 4ug0 (prototype)
@@ -22,7 +19,7 @@ proto_uL4 = {'parent_id': '4ug0',
              'seq': 'MACARPLISVYSEKGESSGKNVTLPAVFKAPIRPDIVNFVHTNLRKNNRQPYAVSELAGHQTSAESWGTGRAVARIPRVRGGGTHRSGQGAFGNMCRGGRMFAPTKTWRRWHRRVNTTQKRYAICSALAASALPALVMSKGHRIEEVPELPLVVEDKVEGYKKTKEAVLLLKKLKAWNDIKKVYASQRMRAGKGKMRNRRRIQRRGPCIIYNEDNGIIKAFRNIPGITLLNVSKLNILKLAPGGHVGRFCIWTESAFRKLDELYGTWRKAASLKSNYNLPMHKMINTDLSRILKSPEIQRALRAPRKKIHRRVLKKNPLKNLRIMLKLNPYAKTMRRNTILRQARNHKLRVDKAAAAAAALQAKSDEKAAVAGKKPVVGKKGKKAAVGVKKQKKPLVGKKAAATKKPAPEKKPAEKKPTTEEKKPAA'}
 seqs =[proto_uL4]
 # Call RibosomeXYZ API to get all uL4 proteins
-seqs = seqs + get_proteins("uL4")
+seqs = seqs + read_polymers_file("uL4")
 # Saves to "input_sequences_uL4.fasta"
 save_fasta(seqs, "uL4")
       
@@ -52,7 +49,8 @@ with open("data/output/alignment_conserved.csv", mode='w', newline='') as file:
 
 rows = []
 
-for seq in alignment:
+for i, seq in enumerate(alignment[0:50]):
+    print(i)
     name_arr = seq.name.split('_')
     parent = name_arr[1]
     chain = name_arr[2]
@@ -60,7 +58,8 @@ for seq in alignment:
     for i, pos in enumerate(conserved_positions):
         val = map_to_orignal(seq, pos[0])
         
-        coords = get_landmark_coordinates((f'uL4-{i}', pos[1], val+1), chain, parent)
+        if val is not None:
+            coords = get_landmark_coordinates((f'uL4-{i}', pos[1], val+1), chain, parent)
         
         if coords is not None:
             rows.append(coords)
@@ -75,3 +74,6 @@ with open("data/output/landmarks.csv", mode='w', newline='') as file:
     
 duration = time.time() - t1
 print("Script Time: " + str(duration))
+
+# Script Time on 100: 561.4538388252258
+# drastically slowed down as it went on

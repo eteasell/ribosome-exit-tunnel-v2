@@ -1,7 +1,7 @@
 import numpy as np
 
 # Instance is a RCSB ID (for example 4ug0)
-def get_tunnel_coordinates(instance):
+def get_tunnel_coordinates(instance: str):
     
     if instance not in get_tunnel_coordinates.cache:
         xyz = open(f"data/tunnel/tunnel_coordinates_{instance}.txt", mode='r')

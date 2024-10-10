@@ -1,7 +1,7 @@
 from pymol import cmd
 import numpy as np
 from Bio.SeqUtils import seq3
-from data_access import *
+from ribosome_exit_tunnel.data_access import *
 from pathlib import Path
 from collections import Counter
 
@@ -17,13 +17,14 @@ def get_landmark_coordinates(landmark, chain, parent):
         if Path(file).is_file() is False:
             get_mmcif(parent)
                
-        if parent not in cmd.get_names():
-            cmd.load(f'data/mmcif/{parent}.cif', object=f'{parent}')
+        if f'{parent}_{chain}' not in cmd.get_names():
+            cmd.load(f'data/mmcif/{parent}.cif', object=f'{parent}_{chain}')
+            cmd.remove(f'not chain {chain}')
         
     except:
         return None
     
-    select = f"resi {landmark[2]} and chain {chain}"
+    select = f"resi {landmark[2]}"
     
     atom_coords = []
     cmd.iterate_state(1, select, 'atom_coords.append((chain, resn, x, y, z))', space={'atom_coords': atom_coords})
