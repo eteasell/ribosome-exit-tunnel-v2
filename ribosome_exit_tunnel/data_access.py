@@ -46,8 +46,6 @@ def read_polymers_file(type):
         print("Error accessing polymer data.")
         return None
     
-    return
-    
 # API call to get mmcif file
 def get_mmcif(parent_id):
     try:
