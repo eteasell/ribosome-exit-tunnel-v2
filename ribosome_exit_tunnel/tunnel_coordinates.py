@@ -1,7 +1,7 @@
 import numpy as np
 
 # Instance is a RCSB ID (for example 4ug0)
-def get_tunnel_coordinates(instance: str):
+def get_tunnel_coordinates(instance: str) -> dict[int,list[float]]:
     
     if instance not in get_tunnel_coordinates.cache:
         xyz = open(f"data/tunnel/tunnel_coordinates_{instance}.txt", mode='r')
@@ -24,8 +24,8 @@ def get_tunnel_coordinates(instance: str):
             for str in content:
                 str.strip()
                 try:
-                    str = float(str)
-                    cleaned.append(str)
+                    val = float(str)
+                    cleaned.append(val)
                 except:
                     None
         

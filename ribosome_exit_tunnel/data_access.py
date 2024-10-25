@@ -2,9 +2,8 @@ import requests
 import urllib.request
 import shutil
 import json
-import time
+from ribosome_exit_tunnel.taxonomy import *
 
-# API call to get list of all proteins of type 'type'
 def get_proteins(type):
     try:
         url = f"https://api.ribosome.xyz/structures/list_polymers_filtered_by_polymer_class?polymer_class={type}"
@@ -35,13 +34,38 @@ def read_polymers_file(type):
     try:
         entities = data[0]["collect(properties(m))"]
         ids = set()
-        proteins = []
+        chains = []
         for obj in entities:
             if obj['parent_rcsb_id'] not in ids:
                 ids.add(obj['parent_rcsb_id'])
-                proteins.append({'parent_id': obj['parent_rcsb_id'], 'auth_asym_id': obj['auth_asym_id'], 'seq': obj['entity_poly_seq_one_letter_code']})
+                chains.append({'parent_id': obj['parent_rcsb_id'], 
+                                 'auth_asym_id': obj['auth_asym_id'], 
+                                 'tax_id': obj['src_organism_ids'],
+                                 'seq': obj['entity_poly_seq_one_letter_code_can']})
              
-        return proteins   
+        return chains   
+    except:
+        print("Error accessing polymer data.")
+        return None
+    
+def read_polymers_file_filter_by_kingdom(type, kingdom):
+    file_path = f'data/polymers/{type}_records.json'
+    with open(file_path, 'r', encoding='utf-8-sig') as file:
+        data = json.load(file)
+    
+    try:
+        entities = data[0]["collect(properties(m))"]
+        ids = set()
+        chains = []
+        for obj in entities:
+            if obj['parent_rcsb_id'] not in ids and TaxId.superkingdom(obj['src_organism_ids'][0]) == kingdom:
+                ids.add(obj['parent_rcsb_id'])
+                chains.append({'parent_id': obj['parent_rcsb_id'], 
+                                 'auth_asym_id': obj['auth_asym_id'], 
+                                 'tax_id': obj['src_organism_ids'],
+                                 'seq': obj['entity_poly_seq_one_letter_code_can']})
+             
+        return chains   
     except:
         print("Error accessing polymer data.")
         return None
@@ -62,7 +86,33 @@ def save_fasta(sequences, type):
         print('No sequences to save.')
         return
     
-    with open(f"data/output/input_sequences_{type}.fasta", "w") as file:
+    with open(f"data/output/fasta/sequences_{type}.fasta", "w") as file:
         for seq in sequences:
             file.write(f">{type}_{seq['parent_id']}_{seq['auth_asym_id']}\n{seq['seq']}\n")
+    
+            
+def save_fasta_by_kingdom(sequences, type, kingdom):
+    if sequences is None:
+        print('No sequences to save.')
+        return
+    
+    with open(f"data/output/fasta/sequences_{kingdom}_{type}.fasta", "w") as file:
+        for seq in sequences:
+            file.write(f">{type}_{seq['parent_id']}_{seq['auth_asym_id']}\n{seq['seq']}\n")
+            
+            
+def retrieve_taxid(rcsb_id: str):
+    file_path = f'data/polymers/uL4_records.json'
+    with open(file_path, 'r', encoding='utf-8-sig') as file:
+        data = json.load(file)
+    
+    try:
+        entities = data[0]["collect(properties(m))"]
+        for obj in entities:
+            if obj['parent_rcsb_id'] == rcsb_id:
+                return list(obj['src_organism_ids'])[0]
+        return None
+    except:
+        print("Error accessing polymer data.")
+        return None
             
