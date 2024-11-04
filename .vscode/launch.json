@@ -5,28 +5,29 @@
             "name": "Python: main",
             "type": "debugpy",
             "request": "launch",
-            "module": "ribosome_exit_tunnel.scripts.main_script",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: uL4 and uL22",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "ribosome_exit_tunnel.scripts.poc_uL4_uL22",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: RNA",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "ribosome_exit_tunnel.scripts.poc_L5",
-            "justMyCode": true
+            "module": "protocol.main",
+            "justMyCode": true,
+            "args": ["4UG0"]
         },
         {
             "name": "Python: add polymer",
             "type": "debugpy",
             "request": "launch",
-            "module": "ribosome_exit_tunnel.scripts.add_new_polymer",
+            "module": "protocol.internal.add_new_polymer",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: testing",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "protocol.internal.testing",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: plotting",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "protocol.internal.pymol_plot_landmarks",
             "justMyCode": true
         }
     ]
