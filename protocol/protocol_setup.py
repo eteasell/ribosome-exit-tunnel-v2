@@ -80,8 +80,12 @@ def locate_landmarks(rcsb_id: str, kingdom: str, conserved_positions: list[Landm
     if not Path(path).is_file():
         get_mmcif(rcsb_id)
     
-    parser = MMCIFParser(QUIET=True)
-    structure = parser.get_structure(rcsb_id, path)
+    try:
+        parser = MMCIFParser(QUIET=True)
+        structure = parser.get_structure(rcsb_id, path)
+    except:
+        print(f"BioPython MMCIFParser cannot handle {rcsb_id}.cif file.")
+        return
     
     for polymer in polymers:
         
@@ -90,7 +94,7 @@ def locate_landmarks(rcsb_id: str, kingdom: str, conserved_positions: list[Landm
         seq = get_rcsb_in_alignment(alignment, rcsb_id)
         if seq is None:
             print("rcsb_id not found in alignment.")
-            return None 
+            continue
     
         name_arr = seq.name.split('_')
         parent = name_arr[1]

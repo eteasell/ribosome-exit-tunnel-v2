@@ -5,7 +5,6 @@ from protocol.tunnel_coordinates import find_closest_point
 import subprocess
 from Bio import AlignIO, Seq
 from Bio.PDB import Structure
-from protocol.protocol_setup import *
 from collections import Counter
 from io import StringIO
 
@@ -46,7 +45,6 @@ def locate_residues(landmark: Landmark,
         print(f"Cannot find {landmark} on {rcsb_id} {polymer}")
         return None 
         
-    # TODO: when running on 3J7Z, 23S, flat_aligned_position was None
     resi_id = flat_seq[1][flat_aligned_position].get_id()
 
     residue = chain[resi_id]
@@ -160,4 +158,4 @@ def get_rcsb_in_alignment(alignment, rcsb_id):
     for i, seq in enumerate(alignment):
         parent = seq.name.split('_')[1]
         if parent == rcsb_id: return alignment[i]
-    return False
+    return None

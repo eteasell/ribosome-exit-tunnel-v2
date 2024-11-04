@@ -59,6 +59,8 @@ def main(rcsb_id):
                 conserved_positions.append(landmark)
         
         rows = locate_landmarks(rcsb_id, kingdom, conserved_positions, polymers)
+        
+        if rows is None: return
                  
         with open(f"data/output/landmarks/{kingdom}/landmarks_{rcsb_id}.csv", mode='w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=["parent_id", "landmark", "residue", "position", "x", "y", "z"])
