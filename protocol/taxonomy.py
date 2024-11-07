@@ -54,8 +54,6 @@ class TaxId:
         taxid, include_only: None | list[PhylogenyRank] = None
     ) -> list[int]:
         """Return ncbi lineage, except filter out the ranks that are not among the @PhylogenyRank."""
-        # lin = list(filter(lambda x: Taxid.rank(x) in typing.get_args(PhylogenyRank), ncbi.get_lineage(taxid) ) )
-        # lin = list(filter(lambda x: Taxid.rank(x) in typing.get_args(PhylogenyRank), ncbi.get_lineage(taxid) ) )
         lin = ncbi.get_lineage(taxid)
         if include_only is not None:
             return list(filter(lambda x: TaxId.rank(x) in include_only, lin))
@@ -92,3 +90,9 @@ class TaxId:
                         taxid
                     )
                 )
+                
+    @staticmethod
+    def rank(taxid: int) -> PhylogenyRank:
+        """Given a @taxid, return the rank of the taxid"""
+        lineage = ncbi.get_lineage(taxid)
+        return ncbi.get_rank(lineage)[taxid]

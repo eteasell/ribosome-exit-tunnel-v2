@@ -9,19 +9,43 @@ from protocol.taxonomy import *
 from protocol.domain.sequence import *
 from protocol.locate_residues import *
 
-
-def align(kingdom: str):
+def process_list(list_rcsb_id: list[str]):
+    processed_ids = []
+    changed_files = []
+    for rcsb_id in list_rcsb_id:
+        kingdom = find_kingdom(rcsb_id)
+        
+        path = f"../ribosome-exit-tunnel/data/mmcif/{rcsb_id}.cif"
+        if not Path(path).is_file():
+            success = get_mmcif(rcsb_id)
+            if success is False:
+                print(f"Cannot access {rcsb_id} file.")
+                continue
+            
+        profile = None
+        for polymer in PROTOTYPES[kingdom].keys():
+            if check_fasta_for_rcsb_id(rcsb_id, polymer, kingdom) is False:
+                if profile is None:
+                    profile = get_profile(rcsb_id)
+                    
+                # TODO: this method needs work...
+                changed_file = add_polymer_to_fasta_list(rcsb_id, polymer, profile, kingdom)
+                
+                if changed_file not in changed_files:
+                    changed_files.append(changed_file)
+        
+        processed_ids.append(rcsb_id)
+                               
+    return processed_ids, changed_files
     
-    prototype = PROTOTYPES[kingdom]
+def align(files: list[str]):
     
-    for polymer in prototype.keys():
-        print(f"Starting polymer {polymer}...")
-        # Perform multiple sequence alignment   
-        input = f"data/fasta/sequences_{kingdom}_{polymer}.fasta"
-        output = f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
+    for file in files:
+        input = f"data/fasta/{file}.fasta"
+        output = f"data/output/fasta/aligned_{file}.fasta"
         mafft_command = f"mafft --auto --leavegappyregion {input} > {output}"
         subprocess.call(mafft_command, shell=True)
-    
+
 
 def select_landmarks(kingdom: str, conservation_threshold: float, distance_threshold: float):
     
@@ -60,7 +84,6 @@ def select_landmarks(kingdom: str, conservation_threshold: float, distance_thres
             print(f"Cannot find {polymer} prototype {proto_id}")
             continue
         
-        # TODO: may want to be careful with model 0 choice here
         chain = structure.child_dict[0][asym_id]
         chain_container = SequenceMappingContainer(chain)
         flat_seq = chain_container.flat_sequence
