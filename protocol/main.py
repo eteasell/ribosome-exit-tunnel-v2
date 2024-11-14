@@ -35,6 +35,8 @@ def main(list_rcsb_id):
     align(changed_files)
     
     for rcsb_id in processed_ids:
+        
+        t2 = time.time()
     
         kingdom = find_kingdom(rcsb_id)
         
@@ -75,6 +77,8 @@ def main(list_rcsb_id):
                 print(f"Cannot access data for specimen {rcsb_id}")
             else:
                 print(f"System not yet calibrated to {kingdom}.")
+                
+        print(f"Completed {rcsb_id}. Duration: {time.time() - t2}")
         
     duration = time.time() - t1
     print(f"Duration: {duration}")

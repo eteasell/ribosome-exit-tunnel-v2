@@ -13,11 +13,11 @@ class Landmark:
     def __str__(self):
         return f"{self.residue}{self.position}"
 
-    # Example parameters:
-    # landmark = Landmark(56, 'G', 'uL4-1')
-    # chain = 'C'
-    # parent = '6vwl'
     def get_landmark_coordinates(self, chain: str, parent: str, rna: bool = False) -> dict:
+        '''
+        Note that this method is not used in the main code, as it was replaced by "locate_residues", which is more robust to
+        inconsistent PDB residue numbering.
+        '''
     
         try:
             file = f'data/mmcif/{parent}.cif'

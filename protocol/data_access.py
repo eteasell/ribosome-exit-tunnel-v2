@@ -104,7 +104,8 @@ def retrieve_taxid(rcsb_id: str):
         for obj in entities:
             if obj['parent_rcsb_id'] == rcsb_id:
                 return list(obj['src_organism_ids'])[0]
-        return None
+       
+        return get_taxid_from_profile(rcsb_id)
     except:
         print("Error accessing polymer data.")
         return None
@@ -122,6 +123,21 @@ def find_kingdom(rcsb_id: str):
 
 ############ RiboXYZ ###################
 
+def get_taxid_from_profile(rcsb_id: str):
+    try:
+        url = f"https://api.ribosome.xyz/structures/profile?rcsb_id={rcsb_id}"
+        response = requests.get(url)
+        
+        polymers = []
+        if response.status_code == 200:
+            data = response.json()
+            return data['src_organism_ids'][0]
+        else:
+            print('Error:', response.status_code)
+            return None
+    except:
+        return None 
+    
 def get_profile(rcsb_id: str):
     try:
         url = f"https://api.ribosome.xyz/structures/profile?rcsb_id={rcsb_id}"
@@ -207,6 +223,8 @@ def check_fasta_for_rcsb_id(rcsb_id: str, polymer: str, kingdom: str):
 
 def add_polymer_to_fasta_list(rcsb_id: str, polymer_type: str, profile: list[dict], kingdom:str):
     polymer = next((item for item in profile if item["polymer"] == polymer_type), None)
+    if polymer is None:
+        return None
     asym_id = polymer['auth_asym_id']
     seq = polymer['seq']
     name = f"{polymer_type}_{rcsb_id}_{asym_id}"

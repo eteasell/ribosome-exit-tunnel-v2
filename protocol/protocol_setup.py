@@ -24,17 +24,25 @@ def process_list(list_rcsb_id: list[str]):
             
         profile = None
         for polymer in PROTOTYPES[kingdom].keys():
+            add_to_processed = True
             if check_fasta_for_rcsb_id(rcsb_id, polymer, kingdom) is False:
                 if profile is None:
                     profile = get_profile(rcsb_id)
+                
+                if profile is None:
+                    add_to_processed = False
+                    continue
                     
-                # TODO: this method needs work...
                 changed_file = add_polymer_to_fasta_list(rcsb_id, polymer, profile, kingdom)
+                
+                if changed_file is None:
+                    add_to_processed = False
                 
                 if changed_file not in changed_files:
                     changed_files.append(changed_file)
         
-        processed_ids.append(rcsb_id)
+        if add_to_processed:
+            processed_ids.append(rcsb_id)
                                
     return processed_ids, changed_files
     
