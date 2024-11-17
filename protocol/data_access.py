@@ -148,8 +148,10 @@ def get_profile(rcsb_id: str):
             data = response.json()
             for obj in data['proteins']:
                 if obj['assembly_id'] == 0:
-                    polymers.append({'polymer': obj['nomenclature'][0], 'auth_asym_id': obj['auth_asym_id'], 'seq': obj['entity_poly_seq_one_letter_code_can']})
-                
+                    try:
+                        polymers.append({'polymer': obj['nomenclature'][0], 'auth_asym_id': obj['auth_asym_id'], 'seq': obj['entity_poly_seq_one_letter_code_can']})
+                    except:
+                        continue
             return polymers
         else:
             print('Error:', response.status_code)
@@ -224,6 +226,7 @@ def check_fasta_for_rcsb_id(rcsb_id: str, polymer: str, kingdom: str):
 def add_polymer_to_fasta_list(rcsb_id: str, polymer_type: str, profile: list[dict], kingdom:str):
     polymer = next((item for item in profile if item["polymer"] == polymer_type), None)
     if polymer is None:
+        print(f"Cannot find polymer {polymer_type} in {rcsb_id}")
         return None
     asym_id = polymer['auth_asym_id']
     seq = polymer['seq']
