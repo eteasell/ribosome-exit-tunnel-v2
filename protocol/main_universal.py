@@ -7,7 +7,7 @@ import argparse
 This is the script to run to get UNIVERSAL landmarks for a given list of rcsb_id's. This means that the landmarks 
 are not selected separately by kingdom.
 
-To run this script, navigate to 'ribosome-exit-tunnel', and execute the following prompt:
+To run this script, navigate to 'ribosome-exit-tunnel-v2', and execute the following prompt:
 
     python3 -m protocol.main_universal [rcsb_id]
     

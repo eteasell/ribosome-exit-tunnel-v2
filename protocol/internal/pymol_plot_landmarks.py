@@ -7,7 +7,7 @@ kingdom = "bacteria"
 rcsb_id = '6YST'
 coordinates = []
 
-path = f'/Users/ellateasell/ISCI448B/code/repos/ribosome-exit-tunnel/data/output/landmarks/{kingdom}/landmarks_{rcsb_id}.csv'
+path = f'/Users/ellateasell/ISCI448B/code/repos/-v2/data/output/landmarks/{kingdom}/landmarks_{rcsb_id}.csv'
 
 # get list of coordinates
 with open(path, mode='r', newline='') as file:

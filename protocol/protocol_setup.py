@@ -20,7 +20,7 @@ def process_list(list_rcsb_id: list[str], universal: bool = False):
             kingdom = find_kingdom(rcsb_id)
             prototype = PROTOTYPES[kingdom]
         
-        path = f"../ribosome-exit-tunnel/data/mmcif/{rcsb_id}.cif"
+        path = f"../ribosome-exit-tunnel-v2/data/mmcif/{rcsb_id}.cif"
         if not Path(path).is_file():
             success = get_mmcif(rcsb_id)
             if success is False:
@@ -69,7 +69,7 @@ def select_landmarks(conservation_threshold: float, distance_threshold: float, k
     proto_id = prototype['uL4']['parent_id']
     
     parser = MMCIFParser(QUIET=True)
-    path = f"../ribosome-exit-tunnel/data/mmcif/{proto_id}.cif"
+    path = f"../ribosome-exit-tunnel-v2/data/mmcif/{proto_id}.cif"
     structure = parser.get_structure(proto_id, path)
     
     total_conserved = []
@@ -120,7 +120,7 @@ def select_landmarks(conservation_threshold: float, distance_threshold: float, k
 def locate_landmarks(rcsb_id: str, conserved_positions: list[Landmark], polymers: list[str], kingdom : str = None):
     rows = []
     
-    path = f"../ribosome-exit-tunnel/data/mmcif/{rcsb_id}.cif"
+    path = f"../ribosome-exit-tunnel-v2/data/mmcif/{rcsb_id}.cif"
     if not Path(path).is_file():
         get_mmcif(rcsb_id)
     
