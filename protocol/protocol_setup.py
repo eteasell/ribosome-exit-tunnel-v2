@@ -9,11 +9,16 @@ from protocol.taxonomy import *
 from protocol.domain.sequence import *
 from protocol.locate_residues import *
 
-def process_list(list_rcsb_id: list[str]):
+def process_list(list_rcsb_id: list[str], universal: bool = False):
     processed_ids = []
     changed_files = []
     for rcsb_id in list_rcsb_id:
-        kingdom = find_kingdom(rcsb_id)
+        if universal is True:
+            kingdom = None
+            prototype = UNIVERSAL_PROTOTYPE
+        else:
+            kingdom = find_kingdom(rcsb_id)
+            prototype = PROTOTYPES[kingdom]
         
         path = f"../ribosome-exit-tunnel/data/mmcif/{rcsb_id}.cif"
         if not Path(path).is_file():
@@ -23,9 +28,10 @@ def process_list(list_rcsb_id: list[str]):
                 continue
             
         profile = None
-        for polymer in PROTOTYPES[kingdom].keys():
+        for polymer in prototype.keys():
             add_to_processed = True
-            if check_fasta_for_rcsb_id(rcsb_id, polymer, kingdom) is False:
+            find_seq = check_fasta_for_rcsb_id(rcsb_id, polymer, kingdom)
+            if find_seq is None:
                 if profile is None:
                     profile = get_profile(rcsb_id)
                 
@@ -37,8 +43,7 @@ def process_list(list_rcsb_id: list[str]):
                 
                 if changed_file is None:
                     add_to_processed = False
-                
-                if changed_file not in changed_files:
+                elif changed_file not in changed_files:
                     changed_files.append(changed_file)
         
         if add_to_processed:
@@ -55,9 +60,12 @@ def align(files: list[str]):
         subprocess.call(mafft_command, shell=True)
 
 
-def select_landmarks(kingdom: str, conservation_threshold: float, distance_threshold: float):
+def select_landmarks(conservation_threshold: float, distance_threshold: float, kingdom: str = None):
     
-    prototype = PROTOTYPES[kingdom]
+    if kingdom is None:
+        prototype = UNIVERSAL_PROTOTYPE
+    else:
+        prototype = PROTOTYPES[kingdom]
     proto_id = prototype['uL4']['parent_id']
     
     parser = MMCIFParser(QUIET=True)
@@ -70,8 +78,13 @@ def select_landmarks(kingdom: str, conservation_threshold: float, distance_thres
         print(f"Starting polymer {polymer}...")
         
         asym_id = prototype[polymer]['auth_asym_id']
+        
+        if kingdom is None:
+            path = f"data/output/fasta/aligned_sequences_{polymer}.fasta"
+        else:
+            path = f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
 
-        alignment = AlignIO.read(f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta", "fasta")
+        alignment = AlignIO.read(path, "fasta")
 
         conserved_positions = []
 
@@ -96,7 +109,7 @@ def select_landmarks(kingdom: str, conservation_threshold: float, distance_thres
         chain_container = SequenceMappingContainer(chain)
         flat_seq = chain_container.flat_sequence
         
-        conserved_positions = cherry_pick(polymer, proto_seq, conserved_positions, distance_threshold, kingdom, chain, flat_seq)
+        conserved_positions = cherry_pick(polymer, proto_seq, conserved_positions, distance_threshold, chain, flat_seq, kingdom)
 
         total_conserved = total_conserved + conserved_positions
         
@@ -104,7 +117,7 @@ def select_landmarks(kingdom: str, conservation_threshold: float, distance_thres
 
 # given a full list of landmarks (for all polymers), and a list of those polymers,
 # returns a list of landmark location for this rcsb_id accross all landmarks
-def locate_landmarks(rcsb_id: str, kingdom: str, conserved_positions: list[Landmark], polymers: list[str]):
+def locate_landmarks(rcsb_id: str, conserved_positions: list[Landmark], polymers: list[str], kingdom : str = None):
     rows = []
     
     path = f"../ribosome-exit-tunnel/data/mmcif/{rcsb_id}.cif"
@@ -120,7 +133,12 @@ def locate_landmarks(rcsb_id: str, kingdom: str, conserved_positions: list[Landm
     
     for polymer in polymers:
         
-        alignment = AlignIO.read(f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta", "fasta")
+        if kingdom is None:
+            path = f"data/output/fasta/aligned_sequences_{polymer}.fasta"
+        else:
+            path = f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
+            
+        alignment = AlignIO.read(path, "fasta")
     
         seq = get_rcsb_in_alignment(alignment, rcsb_id)
         if seq is None:
@@ -131,7 +149,12 @@ def locate_landmarks(rcsb_id: str, kingdom: str, conserved_positions: list[Landm
         parent = name_arr[1]
         asym_id = name_arr[2]
         
-        chain = structure.child_dict[0][asym_id]
+        try:
+            chain = structure.child_dict[0][asym_id]
+        except:
+            print(f"Chain {asym_id} not found in {rcsb_id} PDB file")
+            continue
+        
         chain_container = SequenceMappingContainer(chain)
         flat_seq = chain_container.flat_sequence
     
@@ -141,7 +164,7 @@ def locate_landmarks(rcsb_id: str, kingdom: str, conserved_positions: list[Landm
         
             landmark = Landmark(pos.position, pos.residue, f'{polymer}-{i}')
 
-            coords = locate_residues(landmark, polymer, asym_id, parent, kingdom, chain, flat_seq)
+            coords = locate_residues(landmark, polymer, asym_id, parent, chain, flat_seq, kingdom)
         
             if coords is not None:
                 rows.append(coords)

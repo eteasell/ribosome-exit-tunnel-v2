@@ -4,19 +4,15 @@ import time
 import argparse
 
 '''
-This is the script to run to get landmarks for a given rcsb_id.
+This is the script to run to get landmarks for a given list of rcsb_id's.
 
-To run this script, navigate to 'ribosome-exit-tunnel, and execute the following prompt:
+To run this script, navigate to 'ribosome-exit-tunnel', and execute the following prompt:
 
     python3 -m protocol.main [rcsb_id]
     
-where [rcsb_id] is the ID of the ribosome of interest.
+where [rcsb_id] is the list of IDs of the ribosomes of interest.
 
 Note that for debugging, the rcsb_id parameter is set in the launch.json file.
-
-To rerun align or landmark selection, change the boolean flags to true. 
-NOTE: Rerunning the alignment will take a long time (~ 10 minutes). The only reason for rerun alignment is if you have
-changed the input fasta files to include new specimens that were not previously present. Otherwise, there should be no need.
 
 To see changes in CONSERVATION and DISTANCE parameters, you must change 'reselect_landmarks' to True.
 '''
@@ -30,9 +26,17 @@ def main(list_rcsb_id):
 
     t1 = time.time()
     
+    '''
+    Processed id's are the filtered list of id's for which the structure and sequence files were successfully accessed
+    Changed files is the list of fasta files which have had additions to include the given ids. 
+    '''
     processed_ids, changed_files = process_list(list_rcsb_id)
     
+    print(f"Starting alignment on {len(changed_files)} files.")
+    
     align(changed_files)
+    
+    print(f"Alignments completed in {time.time() - t1} seconds.")
     
     for rcsb_id in processed_ids:
         
@@ -43,7 +47,7 @@ def main(list_rcsb_id):
         if kingdom is not None and PROTOTYPES[kingdom] is not None:
             
             if reselect_landmarks:
-                conserved = select_landmarks(kingdom, CONSERVATION, DISTANCE)
+                conserved = select_landmarks(CONSERVATION, DISTANCE, kingdom)
             
                 with open(f"data/output/conserved/alignment_close_conserved_{kingdom}.csv", mode='w', newline='') as file:
                     writer = csv.DictWriter(file, fieldnames=["chain", "residue", "position"])
@@ -63,7 +67,7 @@ def main(list_rcsb_id):
                     landmark = Landmark(int(row['position']), row['residue'], row['chain'])
                     conserved_positions.append(landmark)
             
-            rows = locate_landmarks(rcsb_id, kingdom, conserved_positions, polymers)
+            rows = locate_landmarks(rcsb_id, conserved_positions, polymers, kingdom)
             
             if rows is None: continue
                     

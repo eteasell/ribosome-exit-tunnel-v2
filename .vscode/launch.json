@@ -7,7 +7,15 @@
             "request": "launch",
             "module": "protocol.main",
             "justMyCode": true,
-            "args": ["6HCQ"]
+            "args": ["4U4Q"]
+        },
+        {
+            "name": "Python: main universal",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "protocol.main_universal",
+            "justMyCode": true,
+            "args": ["7OSA"]
         },
         {
             "name": "Python: add polymer",

@@ -13,25 +13,34 @@ pairwise_alignment_cache = {}
 def locate_residues(landmark: Landmark, 
                     polymer: str, 
                     polymer_id: str, 
-                    rcsb_id: str, 
-                    kingdom: str, 
+                    rcsb_id: str,  
                     chain: Structure, 
-                    flat_seq) -> dict:
+                    flat_seq,
+                    kingdom: str = None) -> dict:
     
     '''
     This method takes a landmark centered on the alignment, and finds this residue on the given rcsb_id's polymer.
     Returns the residues position and coordinates.
     '''
     
-    alignment = AlignIO.read(f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta", "fasta")
+    if kingdom is None:
+        path = f"data/output/fasta/aligned_sequences_{polymer}.fasta"
+    else:
+        path = f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
+        
+    alignment = AlignIO.read(path, "fasta")
     aligned_seq = get_rcsb_in_alignment(alignment, rcsb_id)
     
-    orig_seq = get_uniprot_seq_from_file(polymer, rcsb_id)
+    orig_seq = check_fasta_for_rcsb_id(rcsb_id, polymer, kingdom)
+
     if orig_seq is None:
         print("Cannot access uniprot sequence")
         return
     
     alignment = run_pairwise_alignment(rcsb_id, polymer_id, orig_seq, flat_seq[0])
+    
+    if alignment is None:
+        return None
     
     flattened_seq_aligned = alignment[1]
     
@@ -92,19 +101,25 @@ def run_pairwise_alignment(rcsb_id, polymer_id, seq1, seq2):
     )
 
     # Read the MAFFT output directly from stdout into a MultipleSeqAlignment object
-    alignment =  AlignIO.read(StringIO(process.stdout), "fasta")
+    try:
+        alignment =  AlignIO.read(StringIO(process.stdout), "fasta")
+    except:
+        print(f"Issue with pairwise sequence alignment on {rcsb_id}")
+        pairwise_alignment_cache[cache_key] = None
+        return None
+    
     pairwise_alignment_cache[cache_key] = alignment
     
     return alignment
+
     
-# Given a list of potential landmarks in the form: [(31, 'F'), (43, 'V'), ..]
 def cherry_pick(polymer: str, 
                 seq: Seq, 
                 conserved_positions: list[Landmark], 
                 threshold: float,
-                kingdom: str,
                 chain: Structure,
-                flat_seq
+                flat_seq,
+                kingdom : str = None
                 ) -> list[Landmark]:
     
     name_arr = seq.name.split('_')
@@ -115,7 +130,7 @@ def cherry_pick(polymer: str,
     
     for i, pos in enumerate(conserved_positions):
         
-        coords = locate_residues(pos, polymer, chain_id, parent, kingdom, chain, flat_seq)
+        coords = locate_residues(pos, polymer, chain_id, parent, chain, flat_seq, kingdom)
         
         if coords is None: continue
         xyz = [coords['x'], coords['y'], coords['z']]
