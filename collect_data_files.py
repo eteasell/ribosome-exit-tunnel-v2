@@ -1,24 +1,23 @@
 import csv
 from pathlib import Path
 
-kingdom = "archaea"
 landmarks = []
 
 conserved_positions = []
-with open(f"data/output/conserved/alignment_close_conserved_{kingdom}.csv", mode='r', newline='') as file:
+with open(f"data/output/conserved/alignment_close_conserved.csv", mode='r', newline='') as file:
     reader = csv.DictReader(file)
     for row in reader:
         landmarks.append(f"{row['chain']}-x")
         landmarks.append(f"{row['chain']}-y")
         landmarks.append(f"{row['chain']}-z")
 
-with open(f"data/output/landmarks/{kingdom}.csv", mode='w', newline='') as file:
+with open(f"data/output/landmarks/universal.csv", mode='w', newline='') as file:
     writer = csv.DictWriter(file, fieldnames= ['rcsb_id'] + landmarks)
     
     if file.tell() == 0:
         writer.writeheader()
     
-    folder_path = Path(f"data/output/landmarks/{kingdom}")
+    folder_path = Path(f"data/output/landmarks/universal")
     
     for file in folder_path.iterdir():
         with open(file, mode='r', newline='') as file_i:
