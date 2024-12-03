@@ -7,7 +7,8 @@
             "request": "launch",
             "module": "protocol.main",
             "justMyCode": true,
-            "args": ["4U4Q"]
+            "args": ["4UG0"],
+            "python": "/opt/miniconda3/envs/env1/bin/python"
         },
         {
             "name": "Python: main universal",
@@ -15,28 +16,8 @@
             "request": "launch",
             "module": "protocol.main_universal",
             "justMyCode": true,
-            "args": ["7OSA"]
-        },
-        {
-            "name": "Python: add polymer",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "protocol.internal.add_new_polymer",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: testing",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "protocol.internal.testing",
-            "justMyCode": true
-        },
-        {
-            "name": "Python: plotting",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "protocol.internal.pymol_plot_landmarks",
-            "justMyCode": true
+            "args": ["7OSA"],
+            "python": "/opt/miniconda3/envs/env1"
         }
     ]
 }

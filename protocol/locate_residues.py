@@ -139,12 +139,17 @@ def cherry_pick(polymer: str,
         print(f"{pos} = {dist}")
         
         if dist <= threshold:
-            pos.name = f'{polymer}-{landmark_number}'
+            
+            if kingdom is not None:
+                tag = kingdom_tag(kingdom)
+                pos.name = f'{polymer}-{landmark_number}-{tag}'
+            else:
+                pos.name = f'{polymer}-{landmark_number}'
+                
             landmark_number += 1
             mapped_conserved.append(pos)
         
-    return mapped_conserved
-    
+    return mapped_conserved    
     
 # Map conserved residue locations to orignal sequence positions
 def map_to_original(sequence: Seq, position: int) -> int:
@@ -174,3 +179,13 @@ def get_rcsb_in_alignment(alignment, rcsb_id):
         parent = seq.name.split('_')[1]
         if parent == rcsb_id: return alignment[i]
     return None
+
+def kingdom_tag(kingdom: str):
+    if kingdom == "eukaryota":
+        return 'e'
+    elif kingdom == 'bacteria':
+        return 'b'
+    elif kingdom == 'archaea':
+        return 'a'
+    else:
+        return None

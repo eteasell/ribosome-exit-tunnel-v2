@@ -17,6 +17,14 @@ Note that for debugging, the rcsb_id parameter is set in the launch.json file.
 
 To see changes in CONSERVATION and DISTANCE parameters, you must change 'reselect_landmarks' to True.
 
+The FASTA files stored in /data/fasta contain sequences for a large number of ribosome specimens. However, if you are 
+running this code on a large number of new ribosomes, you should set 'reselect_landmarks' to True. This is because there is a
+chance that conserved residues will have changed do to the new sequences in th alignments, so reselection and reassignment
+should be done for best accuracy.
+
+NOTE: This code will automatically run the alignements when the input fasta files have been changed; however, the alignments
+can also be run with MAFFT online, which will be fasta than through this code.
+
 '''
     
 reselect_landmarks = False
@@ -40,7 +48,7 @@ def main(list_rcsb_id):
     
     print(f"Alignments completed in {time.time() - t1} seconds.")
     
-    if len(changed_files) > 0 or reselect_landmarks:
+    if reselect_landmarks:
         conserved = select_landmarks(CONSERVATION, DISTANCE)
     
         with open(f"data/output/conserved/alignment_close_conserved.csv", mode='w', newline='') as file:

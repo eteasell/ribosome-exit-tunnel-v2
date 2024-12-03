@@ -162,7 +162,7 @@ def locate_landmarks(rcsb_id: str, conserved_positions: list[Landmark], polymers
         for pos in conserved_positions:
             if polymer not in pos.name: continue
         
-            landmark = Landmark(pos.position, pos.residue, f'{polymer}-{i}')
+            landmark = Landmark(pos.position, pos.residue, pos.name)
 
             coords = locate_residues(landmark, polymer, asym_id, parent, chain, flat_seq, kingdom)
         
