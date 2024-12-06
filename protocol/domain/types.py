@@ -88,11 +88,6 @@ PROTOTYPES = {
             'auth_asym_id': 'BS', 
             'seq': 'MAKRFGYSFQNFDPKRMARASARDLRISPKLAVEVCRELRGMMLNDALRYLDDVIALKRPVPLKRYNDSQGHKPGKGFGPGRYPVKVAKAIKKVLLNVKNNAVQKGLDPDKLKIIHIAAHKGPVLRGWYPRAFGRATPFNEQTTHIEVVVEEIRR'
         },
-        "uL23": {
-            'parent_id': '4V6U', 
-            'auth_asym_id': 'BT', 
-            'seq': 'MDPYKVIIRPVVTEKAISLIEKENKLTFIVDRRATKQDIKRAVEEIFNVKVEKVNTLITPRGEKKAYVKLKPEYSASEVAARLGLF'
-        },
         "eL39": {
             'parent_id': '4V6U', 
             'auth_asym_id': 'Bf', 
