@@ -46,6 +46,9 @@ def main(list_rcsb_id):
     
     print(f"Alignments completed in {time.time() - t1} seconds.")
     
+    # Keep track of which kingdoms we have already reselected landmarks for in this runtime 
+    reselected = []
+    
     for rcsb_id in processed_ids:
         
         t2 = time.time()
@@ -54,7 +57,7 @@ def main(list_rcsb_id):
         
         if kingdom is not None and PROTOTYPES[kingdom] is not None:
             
-            if reselect_landmarks:
+            if reselect_landmarks and kingdom not in reselected:
                 conserved = select_landmarks(CONSERVATION, DISTANCE, kingdom)
             
                 with open(f"data/output/conserved/alignment_close_conserved_{kingdom}.csv", mode='w', newline='') as file:
@@ -64,7 +67,8 @@ def main(list_rcsb_id):
                         writer.writeheader()
         
                     writer.writerows([{'chain': obj.name, 'residue':obj.residue, 'position': obj.position} for i, obj in enumerate(conserved)])
-
+                
+                reselected.append(kingdom)
             
             polymers = PROTOTYPES[kingdom].keys()
 
