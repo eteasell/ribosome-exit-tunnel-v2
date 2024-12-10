@@ -7,6 +7,7 @@ from Bio import AlignIO, Seq
 from Bio.PDB import Structure
 from collections import Counter
 from io import StringIO
+import numpy as np
 
 pairwise_alignment_cache = {}
 

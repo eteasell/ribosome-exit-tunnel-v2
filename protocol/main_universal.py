@@ -9,7 +9,7 @@ are not selected separately by kingdom.
 
 To run this script, navigate to 'ribosome-exit-tunnel-v2', and execute the following prompt:
 
-    python3 -m protocol.main_universal [rcsb_id]
+    python -m protocol.main_universal [rcsb_id]
     
 where [rcsb_id] is the list of IDs of the ribosomes of interest.
 
