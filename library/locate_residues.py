@@ -1,13 +1,14 @@
-from protocol.data_access import *
-from protocol.domain.sequence import *
-from protocol.domain.landmark import *
-from protocol.tunnel_coordinates import find_closest_point
+from library.data_access import *
+from library.sequence import *
+from library.types import Landmark
+from library.tunnel_coordinates import find_closest_point
 import subprocess
 from Bio import AlignIO, Seq
 from Bio.PDB import Structure
 from collections import Counter
 from io import StringIO
 import numpy as np
+from library import OUTPUT_DIR, ASSIGN_DIR
 
 pairwise_alignment_cache = {}
 
@@ -17,7 +18,8 @@ def locate_residues(landmark: Landmark,
                     rcsb_id: str,  
                     chain: Structure, 
                     flat_seq,
-                    kingdom: str = None) -> dict:
+                    kingdom: str | None = None,
+                    taxv2: bool = False) -> dict:
     
     '''
     This method takes a landmark centered on the alignment, and finds this residue on the given rcsb_id's polymer.
@@ -30,13 +32,17 @@ def locate_residues(landmark: Landmark,
     chain: the biopython Chain object holding the sequence
     flat_seq: from SequenceMappingContainer, tuple holding (seq, flat_index_to_residue_map, auth_seq_id_to_flat_index_map)
     kingdom: kingdom to which this rcsb_id belongs, or none if being called from main_universal.py
+    taxv2: boolean flag, True when this method is being called from assign_v2, where only the filtered phylogeny is used
     '''
     
     # access aligned sequence from alignment files
     if kingdom is None:
-        path = f"data/output/fasta/aligned_sequences_{polymer}.fasta"
+        if taxv2 is False:
+            path = OUTPUT_DIR / f"fasta/aligned_sequences_{polymer}.fasta"
+        else:
+            path = ASSIGN_DIR / f"{polymer}_filtered_aligned.fasta"
     else:
-        path = f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
+        path = OUTPUT_DIR / f"fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
     alignment = AlignIO.read(path, "fasta")
     aligned_seq = get_rcsb_in_alignment(alignment, rcsb_id)
     
@@ -132,7 +138,8 @@ def cherry_pick(polymer: str,
                 threshold: float,
                 chain: Structure,
                 flat_seq,
-                kingdom : str = None
+                kingdom : str | None = None,
+                taxv2: bool = False
                 ) -> list[Landmark]:
     
     '''
@@ -155,7 +162,7 @@ def cherry_pick(polymer: str,
     
     for i, pos in enumerate(conserved_positions):
         
-        coords = locate_residues(pos, polymer, chain_id, parent, chain, flat_seq, kingdom)
+        coords = locate_residues(pos, polymer, chain_id, parent, chain, flat_seq, kingdom, taxv2)
         
         if coords is None: continue
         xyz = [coords['x'], coords['y'], coords['z']]

@@ -2,12 +2,13 @@ import subprocess
 from Bio import AlignIO
 from Bio.PDB.MMCIFParser import MMCIFParser
 from pathlib import Path
-from protocol.data_access import *
-from protocol.domain.landmark import *
-from protocol.domain.types import PROTOTYPES
-from protocol.taxonomy import *
-from protocol.domain.sequence import *
-from protocol.locate_residues import *
+from library.data_access import *
+from library.types import Landmark
+from library.types import PROTOTYPES
+from library.taxonomy import *
+from library.sequence import *
+from library.locate_residues import *
+from library import MMCIF_DIR, ASSIGN_DIR, OUTPUT_DIR
 
 def process_list(list_rcsb_id: list[str], universal: bool = False):
     processed_ids = []
@@ -20,8 +21,8 @@ def process_list(list_rcsb_id: list[str], universal: bool = False):
             kingdom = find_kingdom(rcsb_id)
             prototype = PROTOTYPES[kingdom]
         
-        path = f"../ribosome-exit-tunnel-v2/data/mmcif/{rcsb_id}.cif"
-        if not Path(path).is_file():
+        path = MMCIF_DIR / f"{rcsb_id}.cif"
+        if not path.is_file():
             success = get_mmcif(rcsb_id)
             if success is False:
                 print(f"Cannot access {rcsb_id} file.")
@@ -50,7 +51,8 @@ def process_list(list_rcsb_id: list[str], universal: bool = False):
             processed_ids.append(rcsb_id)
                                
     return processed_ids, changed_files
-    
+   
+# Only used in the v1 methods (main and main_universal) 
 def align(files: list[str]):
     
     for file in files:
@@ -60,7 +62,15 @@ def align(files: list[str]):
         subprocess.call(mafft_command, shell=True)
 
 
-def select_landmarks(conservation_threshold: float, distance_threshold: float, kingdom: str = None):
+
+def select_landmarks(conservation_threshold: float, 
+                     distance_threshold: float, 
+                     kingdom: str | None = None, 
+                     taxv2: bool = False):
+    
+    '''
+    Used by the v1 methods, and added taxv2 tag to be used by assign_v2.
+    '''
     
     if kingdom is None:
         prototype = UNIVERSAL_PROTOTYPE
@@ -80,9 +90,12 @@ def select_landmarks(conservation_threshold: float, distance_threshold: float, k
         asym_id = prototype[polymer]['auth_asym_id']
         
         if kingdom is None:
-            path = f"data/output/fasta/aligned_sequences_{polymer}.fasta"
+            if taxv2 is False:
+                path = OUTPUT_DIR / f"fasta/aligned_sequences_{polymer}.fasta"
+            else:
+                path = ASSIGN_DIR / f"{polymer}_filtered_aligned.fasta"
         else:
-            path = f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
+            path = OUTPUT_DIR / f"fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
 
         alignment = AlignIO.read(path, "fasta")
 
@@ -109,7 +122,7 @@ def select_landmarks(conservation_threshold: float, distance_threshold: float, k
         chain_container = SequenceMappingContainer(chain)
         flat_seq = chain_container.flat_sequence
         
-        conserved_positions = cherry_pick(polymer, proto_seq, conserved_positions, distance_threshold, chain, flat_seq, kingdom)
+        conserved_positions = cherry_pick(polymer, proto_seq, conserved_positions, distance_threshold, chain, flat_seq, kingdom, taxv2)
 
         total_conserved = total_conserved + conserved_positions
         

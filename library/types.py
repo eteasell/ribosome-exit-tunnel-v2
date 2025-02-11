@@ -8,6 +8,15 @@ import typing
 from pydantic import BaseModel
 from Bio.PDB.Residue import Residue
 
+class Landmark:
+    def __init__(self, position: int, residue: str, name: str = None):
+        self.name = name
+        self.position = position
+        self.residue = residue
+        
+    def __str__(self):
+        return f"{self.residue}{self.position}"
+
 AMINO_ACIDS = {
     "ALA": {"one_letter_code": "A", "charge": 0},
     "ARG": {"one_letter_code": "R", "charge": 1},
@@ -121,6 +130,7 @@ UNIVERSAL_PROTOTYPE = {
 
 RNA_TYPES = ["23SrRNA", "25SrRNA", "28SrRNA"]
 
+KINGDOMS = ["UNIVERSAL", "BACTERIA", "EUKARYOTA", "ARCHAEA"]
 
 class ResidueSummary(BaseModel): 
     label_seq_id : typing.Optional[int] = None

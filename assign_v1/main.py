@@ -1,4 +1,4 @@
-from protocol.protocol_setup import *
+from library.protocol_setup import *
 import csv
 import time
 import argparse
@@ -8,7 +8,7 @@ This is the script to run to get landmarks for a given list of rcsb_id's.
 
 To run this script, navigate to 'ribosome-exit-tunnel-v2', and execute the following prompt:
 
-    python -m protocol.main [rcsb_id]
+    python -m assign_v1.main [rcsb_id]
     
 where [rcsb_id] is the list of IDs of the ribosomes of interest.
 

@@ -1,6 +1,6 @@
 from Bio.PDB.Residue import Residue
 from Bio.PDB.Chain import Chain
-from protocol.domain.types import *
+from library.types import *
 
 class SequenceMappingContainer(Chain):
     """ 
