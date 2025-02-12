@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+    
         {
             "name": "Python: main",
             "type": "debugpy",
@@ -18,6 +19,15 @@
             "justMyCode": true,
             "args": ["7OSA"],
             "python": "/opt/miniconda3/envs/env1"
+        },
+        {
+            "name": "Python: assign v2",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "assign_v2.assign",
+            "justMyCode": true,
+            "args": "6WD4",
+            "python": "/opt/miniconda3/envs/rib-et/bin/python"
         }
     ]
 }

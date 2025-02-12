@@ -1,15 +1,19 @@
-from protocol.data_access import *
-from protocol.domain.sequence import *
-from protocol.domain.landmark import *
-from protocol.tunnel_coordinates import find_closest_point
+from library.data_access import *
+from library.sequence import *
+from library.types import Landmark
+from library.tunnel_coordinates import find_closest_point
 import subprocess
-from Bio import AlignIO, Seq
+from Bio import AlignIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from Bio.PDB import Structure
 from collections import Counter
 from io import StringIO
 import numpy as np
+from library import OUTPUT_DIR, ASSIGN_DIR
 
 pairwise_alignment_cache = {}
+polymer_alignment_cache = {}
 
 def locate_residues(landmark: Landmark, 
                     polymer: str, 
@@ -17,7 +21,8 @@ def locate_residues(landmark: Landmark,
                     rcsb_id: str,  
                     chain: Structure, 
                     flat_seq,
-                    kingdom: str = None) -> dict:
+                    kingdom: str | None = None,
+                    taxv2: bool = False) -> dict:
     
     '''
     This method takes a landmark centered on the alignment, and finds this residue on the given rcsb_id's polymer.
@@ -30,18 +35,8 @@ def locate_residues(landmark: Landmark,
     chain: the biopython Chain object holding the sequence
     flat_seq: from SequenceMappingContainer, tuple holding (seq, flat_index_to_residue_map, auth_seq_id_to_flat_index_map)
     kingdom: kingdom to which this rcsb_id belongs, or none if being called from main_universal.py
+    taxv2: boolean flag, True when this method is being called from assign_v2, where only the filtered phylogeny is used
     '''
-    
-    # access aligned sequence from alignment files
-    if kingdom is None:
-        path = f"data/output/fasta/aligned_sequences_{polymer}.fasta"
-    else:
-        path = f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
-    alignment = AlignIO.read(path, "fasta")
-    aligned_seq = get_rcsb_in_alignment(alignment, rcsb_id)
-    
-    # find the position of the landmark on the original riboXYZ seq
-    alignment_position = map_to_original(aligned_seq, landmark.position) 
     
     # access riboXYZ sequence (pre alignment)
     orig_seq = check_fasta_for_rcsb_id(rcsb_id, polymer, kingdom)
@@ -51,13 +46,41 @@ def locate_residues(landmark: Landmark,
         return
     
     # run pairwise alignment on the riboXYZ sequence and the flattened PDB sequence
-    alignment = run_pairwise_alignment(rcsb_id, polymer_id, orig_seq, flat_seq[0])
+    pairwise_alignment = run_pairwise_alignment(rcsb_id, polymer_id, orig_seq, flat_seq[0])
     
-    if alignment is None:
+    if pairwise_alignment is None:
         return None
+    
+    # access aligned sequence from alignment files
+    if kingdom is None:
+        if taxv2 is True:
+            path = ASSIGN_DIR / f"{polymer}_filtered_aligned.fasta"
+        else:
+            path = OUTPUT_DIR / f"fasta/aligned_sequences_{polymer}.fasta"
+    else:
+        path = OUTPUT_DIR / f"fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
+        
+    alignment = AlignIO.read(path, "fasta")
+    aligned_seq = get_rcsb_in_alignment(alignment, rcsb_id)
+    
+    # For use by assign_v2
+    if taxv2 is True and aligned_seq is None:
+        
+        # add in this sequence and align to the filtered phylogeny fasta (without saving to files)
+        seq = orig_seq
+        name = f"{polymer}_{rcsb_id}_{polymer_id}"
+        record = SeqRecord(Seq(seq), id=name, description="")
+        records = add_record_to_fasta(ASSIGN_DIR / f"{polymer}_filtered.fasta", record)
+        
+        fasta = "".join(f">{seq.id}\n{seq.seq}\n" for seq in records)
+        alignment = run_alignment(rcsb_id, polymer_id, fasta, polymer_alignment_cache)
+        aligned_seq = get_rcsb_in_alignment(alignment, rcsb_id)
+    
+    # find the position of the landmark on the original riboXYZ seq
+    alignment_position = map_to_original(aligned_seq, landmark.position) 
         
     # map the alignment_position from the original riboXYZ sequence to the pairwise-aligned flattened PDB sequence
-    flattened_seq_aligned = alignment[1]
+    flattened_seq_aligned = pairwise_alignment[1]
     flat_aligned_position = None
     if alignment_position is not None:  
         flat_aligned_position = map_to_original(flattened_seq_aligned, alignment_position)
@@ -96,34 +119,6 @@ def locate_residues(landmark: Landmark,
                 "position": resi_id[1],
                 "x": vec[0], "y": vec[1], "z": vec[2]
             }
-    
-def run_pairwise_alignment(rcsb_id, polymer_id, seq1, seq2):
-    
-    cache_key = f"{rcsb_id}-{polymer_id}"
-    if cache_key in pairwise_alignment_cache:
-        return pairwise_alignment_cache[cache_key]
-        
-    fasta = f">seq1\n{seq1}\n>seq2\n{seq2}"
-
-    # Run MAFFT command
-    process = subprocess.run(
-    ["mafft", "--auto", "-"],
-    input=fasta,
-    text=True,
-    capture_output=True
-    )
-
-    # Read the MAFFT output directly from stdout into a MultipleSeqAlignment object
-    try:
-        alignment =  AlignIO.read(StringIO(process.stdout), "fasta")
-    except:
-        print(f"Issue with pairwise sequence alignment on {rcsb_id}")
-        pairwise_alignment_cache[cache_key] = None
-        return None
-    
-    pairwise_alignment_cache[cache_key] = alignment
-    
-    return alignment
 
     
 def cherry_pick(polymer: str, 
@@ -132,7 +127,8 @@ def cherry_pick(polymer: str,
                 threshold: float,
                 chain: Structure,
                 flat_seq,
-                kingdom : str = None
+                kingdom : str | None = None,
+                taxv2: bool = False
                 ) -> list[Landmark]:
     
     '''
@@ -155,7 +151,7 @@ def cherry_pick(polymer: str,
     
     for i, pos in enumerate(conserved_positions):
         
-        coords = locate_residues(pos, polymer, chain_id, parent, chain, flat_seq, kingdom)
+        coords = locate_residues(pos, polymer, chain_id, parent, chain, flat_seq, kingdom, taxv2)
         
         if coords is None: continue
         xyz = [coords['x'], coords['y'], coords['z']]
@@ -175,6 +171,50 @@ def cherry_pick(polymer: str,
             mapped_conserved.append(pos)
         
     return mapped_conserved    
+   
+def run_pairwise_alignment(rcsb_id, polymer_id, seq1, seq2):
+    
+    fasta = f">seq1\n{seq1}\n>seq2\n{seq2}"
+    
+    return run_alignment(rcsb_id, polymer_id, fasta, pairwise_alignment_cache)
+
+
+def run_alignment(rcsb_id, polymer_id, fasta, cache):
+    
+    cache_key = f"{rcsb_id}-{polymer_id}"
+    if cache_key in cache:
+        return cache[cache_key]
+
+    alignment = align_memory(fasta)
+    
+    if alignment is None:
+        print(f"Issue with sequence alignment on {rcsb_id}")
+        
+    cache[cache_key] = alignment
+    
+    return alignment
+
+def align_memory(fasta: str):
+    
+    # Run MAFFT command
+    process = subprocess.run(
+        ["mafft", "--auto", "-"],
+        input=fasta,
+        text=True,
+        capture_output=True
+        )
+    
+    try:
+        return AlignIO.read(StringIO(process.stdout), "fasta")
+    except:
+        return None
+
+def add_record_to_fasta(path, record) -> list[SeqRecord]:
+    records = []
+    for seq_rec in SeqIO.parse(path, "fasta"):
+        records.append(seq_rec)
+    records.append(record)
+    return records
     
 # Map conserved residue locations to orignal sequence positions
 def map_to_original(sequence: Seq, position: int) -> int:

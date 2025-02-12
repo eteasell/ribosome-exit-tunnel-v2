@@ -1,5 +1,5 @@
 import numpy as np
-from protocol.data_access import find_kingdom
+from library.data_access import find_kingdom
 import csv
 
 cache = {}

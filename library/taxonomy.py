@@ -96,3 +96,32 @@ class TaxId:
         """Given a @taxid, return the rank of the taxid"""
         lineage = ncbi.get_lineage(taxid)
         return ncbi.get_rank(lineage)[taxid]
+    
+    @staticmethod
+    def get_name(taxid):
+        return list(ncbi.get_taxid_translator([taxid]).values())[0]
+    
+    @staticmethod
+    def coerce_to_rank(taxid: int, target_rank: PhylogenyRank) -> int | None:
+        """Given a @taxid and a @rank, return the taxid of the first ancestor of @taxid that is at @rank"""
+        lineage = ncbi.get_lineage(taxid)
+        if lineage is None:
+            raise LookupError("Lineage is None. Check if taxid is NCBI-valid.")
+        for item in lineage:
+            rank = ncbi.get_rank([item])[item]
+            if rank == target_rank:
+                return item
+
+        raise IndexError("Taxid {} does not have a {} level".format(taxid, target_rank))
+    
+    @staticmethod
+    def coerce_all_to_rank(taxids: list[int], level: PhylogenyRank) -> list[int]:
+        """Given a list of taxids, return a list of the same taxids but coerced to the given lineage level(rank)."""
+        new = []
+        for taxid in taxids:
+            try:
+                new.append(TaxId.coerce_to_rank(taxid, level))
+            except Exception as e:
+                print(e)
+                raise Exception(e)
+        return new

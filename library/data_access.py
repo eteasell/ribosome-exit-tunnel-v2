@@ -1,78 +1,16 @@
 import requests
 import urllib.request
 import shutil
-import json
-from protocol.taxonomy import *
+from library.taxonomy import *
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
-from protocol.domain.types import RNA_TYPES
+from library.types import RNA_TYPES
     
 ############ Reading files #################
-
-def read_polymers_file(type):
-    file_path = f'data/polymers/{type}_records.json'
-    with open(file_path, 'r', encoding='utf-8-sig') as file:
-        data = json.load(file)
-    
-    try:
-        entities = data[0]["collect(properties(m))"]
-        ids = set()
-        chains = []
-        for obj in entities:
-            if obj['parent_rcsb_id'] not in ids:
-                ids.add(obj['parent_rcsb_id'])
-                chains.append({'parent_id': obj['parent_rcsb_id'], 
-                                 'auth_asym_id': obj['auth_asym_id'], 
-                                 'tax_id': obj['src_organism_ids'],
-                                 'seq': obj['entity_poly_seq_one_letter_code_can']})
-             
-        return chains   
-    except:
-        print("Error accessing polymer data.")
-        return None
-    
-def read_polymers_file_filter_by_kingdom(type, kingdom):
-    file_path = f'data/polymers/{type}_records.json'
-    with open(file_path, 'r', encoding='utf-8-sig') as file:
-        data = json.load(file)
-    
-    try:
-        entities = data[0]["collect(properties(m))"]
-        ids = set()
-        chains = []
-        for obj in entities:
-            if obj['parent_rcsb_id'] not in ids and TaxId.superkingdom(obj['src_organism_ids'][0]) == kingdom:
-                ids.add(obj['parent_rcsb_id'])
-                chains.append({'parent_id': obj['parent_rcsb_id'], 
-                                 'auth_asym_id': obj['auth_asym_id'], 
-                                 'tax_id': obj['src_organism_ids'],
-                                 'seq': obj['entity_poly_seq_one_letter_code_can']})
-             
-        return chains   
-    except:
-        print("Error accessing polymer data.")
-        return None
-    
-    
-def retrieve_taxid(rcsb_id: str):
-    file_path = f'data/polymers/uL4_records.json'
-    with open(file_path, 'r', encoding='utf-8-sig') as file:
-        data = json.load(file)
-    
-    try:
-        entities = data[0]["collect(properties(m))"]
-        for obj in entities:
-            if obj['parent_rcsb_id'] == rcsb_id:
-                return list(obj['src_organism_ids'])[0]
-       
-        return get_taxid_from_profile(rcsb_id)
-    except:
-        print("Error accessing polymer data.")
-        return None
     
 def find_kingdom(rcsb_id: str):
-    tax_id = retrieve_taxid(rcsb_id)
+    tax_id = get_taxid_from_profile(rcsb_id)
     
     if tax_id is None:
         print(f"Cannot access rcsb_id {rcsb_id} from dataset.")
@@ -88,22 +26,31 @@ def find_rna_in_profile(profile):
             return item
     return None
 
+def get_asym_id_from_profile(rcsb_id, polymer):
+    polymers = get_profile(rcsb_id)
+    
+    if polymer == 'RNA':
+        rna = find_rna_in_profile(polymers)
+        return rna["auth_asym_id"]
+    
+    return next((obj["auth_asym_id"] for obj in polymers if obj["polymer"] == polymer), None)
+
 ############ RiboXYZ ###################
 
-def get_taxid_from_profile(rcsb_id: str):
+def get_taxid_from_profile(rcsb_id: str) -> int | None:
     try:
         url = f"https://api.ribosome.xyz/structures/profile?rcsb_id={rcsb_id}"
         response = requests.get(url)
         
-        polymers = []
         if response.status_code == 200:
             data = response.json()
-            return data['src_organism_ids'][0]
+            return int(data['src_organism_ids'][0])
         else:
-            print('Error:', response.status_code)
+            print('RibosomeXYZ Error:', response.status_code)
             return None
     except:
-        return None 
+        return None
+    
     
 def get_profile(rcsb_id: str):
     try:
@@ -127,7 +74,7 @@ def get_profile(rcsb_id: str):
                         continue
             return polymers
         else:
-            print('Error:', response.status_code)
+            print('RibosomeXYZ Error:', response.status_code)
             return None
     except:
         return None
