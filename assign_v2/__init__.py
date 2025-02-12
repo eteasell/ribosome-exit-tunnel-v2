@@ -7,6 +7,7 @@ MMCIF_DIR       = DATA_DIR / "mmcif"
 OUTPUT_DIR      = DATA_DIR / "output"
 POLYMERS_DIR    = DATA_DIR / "polymers"
 TUNNEL_DIR      = DATA_DIR / "tunnel"
-ASSIGN_DIR         = DATA_DIR / "assign_v2"
+ASSIGN_DIR      = DATA_DIR / "assign_v2"
+LANDMARKS_DIR   = OUTPUT_DIR / "landmarks"
 
 MMCIF_DIR.mkdir(parents=True, exist_ok=True)

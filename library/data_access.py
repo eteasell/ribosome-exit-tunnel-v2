@@ -26,6 +26,15 @@ def find_rna_in_profile(profile):
             return item
     return None
 
+def get_asym_id_from_profile(rcsb_id, polymer):
+    polymers = get_profile(rcsb_id)
+    
+    if polymer == 'RNA':
+        rna = find_rna_in_profile(polymers)
+        return rna["auth_asym_id"]
+    
+    return next((obj["auth_asym_id"] for obj in polymers if obj["polymer"] == polymer), None)
+
 ############ RiboXYZ ###################
 
 def get_taxid_from_profile(rcsb_id: str) -> int | None:

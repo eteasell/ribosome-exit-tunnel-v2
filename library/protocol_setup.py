@@ -69,7 +69,7 @@ def select_landmarks(conservation_threshold: float,
                      taxv2: bool = False):
     
     '''
-    Used by the v1 methods, and added taxv2 tag to be used by assign_v2.
+    Oringinally only used by the v1 methods, but added taxv2 tag to be used by assign_v2.
     '''
     
     if kingdom is None:
@@ -122,45 +122,28 @@ def select_landmarks(conservation_threshold: float,
         chain_container = SequenceMappingContainer(chain)
         flat_seq = chain_container.flat_sequence
         
-        conserved_positions = cherry_pick(polymer, proto_seq, conserved_positions, distance_threshold, chain, flat_seq, kingdom, taxv2)
+        conserved_positions = cherry_pick(polymer, proto_seq, conserved_positions, distance_threshold, 
+                                          chain, flat_seq, kingdom, taxv2)
 
         total_conserved = total_conserved + conserved_positions
         
     return total_conserved
 
+
 # given a full list of landmarks (for all polymers), and a list of those polymers,
 # returns a list of landmark location for this rcsb_id accross all landmarks
-def locate_landmarks(rcsb_id: str, conserved_positions: list[Landmark], polymers: list[str], kingdom : str = None):
+def locate_landmarks(rcsb_id: str, 
+                     conserved_positions: list[Landmark], 
+                     polymers: list[str], 
+                     kingdom : str | None = None,
+                     taxv2: bool = False):
     rows = []
     
-    path = f"../ribosome-exit-tunnel-v2/data/mmcif/{rcsb_id}.cif"
-    if not Path(path).is_file():
-        get_mmcif(rcsb_id)
-    
-    try:
-        parser = MMCIFParser(QUIET=True)
-        structure = parser.get_structure(rcsb_id, path)
-    except:
-        print(f"BioPython MMCIFParser cannot handle {rcsb_id}.cif file.")
-        return
+    structure = load_structure(rcsb_id)
     
     for polymer in polymers:
-        
-        if kingdom is None:
-            path = f"data/output/fasta/aligned_sequences_{polymer}.fasta"
-        else:
-            path = f"data/output/fasta/aligned_sequences_{kingdom}_{polymer}.fasta"
             
-        alignment = AlignIO.read(path, "fasta")
-    
-        seq = get_rcsb_in_alignment(alignment, rcsb_id)
-        if seq is None:
-            print("rcsb_id not found in alignment.")
-            continue
-    
-        name_arr = seq.name.split('_')
-        parent = name_arr[1]
-        asym_id = name_arr[2]
+        asym_id = get_asym_id_from_profile(rcsb_id, polymer)
         
         try:
             chain = structure.child_dict[0][asym_id]
@@ -177,7 +160,7 @@ def locate_landmarks(rcsb_id: str, conserved_positions: list[Landmark], polymers
         
             landmark = Landmark(pos.position, pos.residue, pos.name)
 
-            coords = locate_residues(landmark, polymer, asym_id, parent, chain, flat_seq, kingdom)
+            coords = locate_residues(landmark, polymer, asym_id, rcsb_id, chain, flat_seq, kingdom, taxv2)
         
             if coords is not None:
                 rows.append(coords)
@@ -186,3 +169,16 @@ def locate_landmarks(rcsb_id: str, conserved_positions: list[Landmark], polymers
             
     return rows
     
+    
+def load_structure(rcsb_id: str):
+    
+    path = MMCIF_DIR / f"{rcsb_id}.cif"
+    if not Path(path).is_file():
+        get_mmcif(rcsb_id)
+    
+    try:
+        parser = MMCIFParser(QUIET=True)
+        return parser.get_structure(rcsb_id, path)
+    except:
+        print(f"BioPython MMCIFParser cannot handle {rcsb_id}.cif file.")
+        return
